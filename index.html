@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Detection</title>
+</head>
+<body>
+
+    <h2>Emotion Detection</h2>
+    <video id="video" autoplay playsinline></video>
+    <button id="capture">Capture Image</button>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="photo" alt="Captured Image">
+    <p id="result"></p>
+
+    <script>
+        async function startCamera() {
+            try {
+                const video = document.getElementById("video");
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error("Camera access denied:", error);
+                alert("Please allow camera access.");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", startCamera);
+
+        document.getElementById("capture").addEventListener("click", async function () {
+            const video = document.getElementById("video");
+            const canvas = document.getElementById("canvas");
+            const context = canvas.getContext("2d");
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL("image/jpeg");
+
+            document.getElementById("photo").src = imageData;
+
+            fetch("/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.emotion) {
+                    document.getElementById("result").innerText = "Detected Emotion: " + data.emotion;
+                } else {
+                    document.getElementById("result").innerText = "Error: " + data.error;
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+        fetch("/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: imageData })
+        })
+       // .then(response => response.json())
+        //.then(data => {
+          //  if (data.emotion) {
+            //    document.getElementById("result").innerText = "Detected Emotion: " + data.emotion;
+                
+                // Redirect to a specific page based on emotion
+              //  window.location.href = "https://yourwebsite.com/emotion/" + data.emotion;
+            //} else {
+              //  document.getElementById("result").innerText = "Error: " + data.error;
+           // }
+        //})
+        //.catch(error => console.error("Error:", error));
+        //window.location.href = data.emotion + ".html";
+    </script>
+
+</body>
+</html>
